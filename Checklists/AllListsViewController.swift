@@ -8,7 +8,7 @@
 
 import UIKit
 
-class AllListsViewController: UITableViewController, ListDetailViewControllerDelegate {
+class AllListsViewController: UITableViewController, ListDetailViewControllerDelegate, UINavigationControllerDelegate {
     
     var dataModel: DataModel!
 
@@ -21,7 +21,6 @@ class AllListsViewController: UITableViewController, ListDetailViewControllerDel
     }
 
 
-
     override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return dataModel.lists.count
     }
@@ -32,17 +31,22 @@ class AllListsViewController: UITableViewController, ListDetailViewControllerDel
         let cellIdentifier = "Cell"
         var cell: UITableViewCell! = tableView.dequeueReusableCellWithIdentifier(cellIdentifier) as UITableViewCell?
         if cell == nil {
-            cell = UITableViewCell(style: .Default, reuseIdentifier: cellIdentifier)
+            cell = UITableViewCell(style: .Subtitle, reuseIdentifier: cellIdentifier)
         }
         
         let checklist = dataModel.lists[indexPath.row]
         cell.textLabel!.text = checklist.name
         cell.accessoryType = .DetailDisclosureButton
+        cell.detailTextLabel!.text = "\(checklist.countUncheckedItems()) Remaining"
+        
         return cell
         
     }
     
     override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        
+        dataModel.indexOfSelectedChecklist = indexPath.row
+        
         let checklist = dataModel.lists[indexPath.row]
         performSegueWithIdentifier("ShowChecklist", sender: checklist)
     }
@@ -104,7 +108,22 @@ class AllListsViewController: UITableViewController, ListDetailViewControllerDel
         let checklist = dataModel.lists[indexPath.row]
         controller.checklistToEdit = checklist
         presentViewController(navigationController, animated: true, completion: nil)
-        
+    }
+    
+    func navigationController(navigationController: UINavigationController, willShowViewController viewController: UIViewController, animated: Bool) {
+        if viewController === self {
+            dataModel.indexOfSelectedChecklist = -1
+        }
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        navigationController?.delegate = self
+        let index = dataModel.indexOfSelectedChecklist
+        if ((index>=0) && (index < dataModel.lists.count)) {
+            let checklist = dataModel.lists[index]
+            performSegueWithIdentifier("ShowChecklist", sender: checklist)
+        }
     }
 
 }
